@@ -7,7 +7,7 @@ import numpy
 import serial
 import serial.tools.list_ports
 from asm.api.base import ContainerParameterResults, \
-    ModuleInformation, ModuleConfiguration, ModuleConfigurationPattern
+    ModuleInformation, ModuleConfiguration, ModuleConfigurationPattern, ModuleTask, ModuleTaskInput, ModuleTaskOutput
 from asm.api.hardware import ASMHardware, AvailableDevices
 
 
@@ -117,6 +117,9 @@ class Nc12(ASMHardware):
         pass
 
     def process(self) -> Union[list[ContainerParameterResults], None]:
+        return None
+
+    def task(self, task: ModuleTask, task_input: ModuleTaskInput) -> Union[ModuleTaskOutput, None]:
         return None
 
     def module_info(self) -> ModuleInformation:
