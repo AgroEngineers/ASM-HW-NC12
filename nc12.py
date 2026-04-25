@@ -7,8 +7,7 @@ import numpy
 import serial
 import serial.tools.list_ports
 from asm.api.base import ContainerParameterResults, \
-    ModuleInformation, ModuleConfiguration, ModuleConfigurationPattern, ModuleTask, ModuleTaskInput, ModuleTaskOutput, \
-    ModuleRequirement
+    ModuleInformation, ModuleConfiguration, ModuleConfigurationPattern, ModuleTask, ModuleTaskInput, ModuleTaskOutput
 from asm.api.hardware import ASMHardware, AvailableDevices
 
 
@@ -53,14 +52,20 @@ class Nc12(ASMHardware):
 
         return AvailableDevices(ports, cameras)
 
-    def connect_camera(self, port: str) -> bool:
+    def is_camera_connected(self) -> bool:
+        return bool(self.ACTIVE_CAMERA)
+
+    def is_machine_connected(self) -> bool:
+        return bool(self.ACTIVE_MACHINE)
+
+    async def connect_camera(self, port: str) -> bool:
         self.ACTIVE_CAMERA = cv2.VideoCapture(int(port[10:]))
 
         if not self.ACTIVE_CAMERA.isOpened():
             return False
         return True
 
-    def connect_machine(self, port: str) -> bool:
+    async def connect_machine(self, port: str) -> bool:
         self.ACTIVE_MACHINE = serial.Serial(port, self.BAUD_RATE)
 
         if not self.ACTIVE_MACHINE.is_open:
@@ -76,10 +81,10 @@ class Nc12(ASMHardware):
 
         return True
 
-    def disconnect_camera(self) -> None:
+    async def disconnect_camera(self) -> None:
         self.ACTIVE_CAMERA.release()
 
-    def disconnect_machine(self) -> None:
+    async def disconnect_machine(self) -> None:
         self.set_container(len(self.CONFIGURATION["containers"]))
         self.set_direction(Direction.STOP.name)
 
@@ -111,8 +116,16 @@ class Nc12(ASMHardware):
         return self.CURRENT_STATES
 
     def set_gate(self, gate: int, state: str) -> None:
-        self.ACTIVE_MACHINE.write(str({"gate": gate, "angle": GateStates[state].value, "inverted": bool(self.CONFIGURATION["servos"][gate].get("inverted", False))}).encode('utf-8'))
+        self.ACTIVE_MACHINE.write(str({"gate": gate, "angle": GateStates[state].value, "inverted": bool(
+            self.CONFIGURATION["servos"][gate].get("inverted", False))}).encode('utf-8'))
         self.CURRENT_STATES[gate] = state
+
+    def get_container_count(self) -> int:
+        return len(self.CONFIGURATION["containers"])
+
+    def get_forward_direction(self) -> str:
+        return str(Direction.FORWARD)
+
 
     def canvas(self) -> str:
         pass
